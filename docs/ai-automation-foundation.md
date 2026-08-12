@@ -15,20 +15,20 @@ The AI and automation component will help reduce repetitive customer-support wor
 The customer wants information about an existing order, such as its status, shipment, tracking, or expected delivery.
 
 Example questions:
- Where is my order?
- Has my order shipped?
- Can I track my package?
- When will my order arrive?
+ -  Where is my order?
+ - Has my order shipped?
+ - Can I track my package?
+ - When will my order arrive?
 
 ### 2. RETURNS_REFUNDS
 
 The customer wants information about returning an item or receiving a refund.
 
 Example questions:
- How do I return an item?
- I want to return my order.
- Can I get a refund?
- When will I receive my refund?
+- How do I return an item?
+- I want to return my order.
+- Can I get a refund?
+- When will I receive my refund?
 
 ## Unsupported Questions
 
