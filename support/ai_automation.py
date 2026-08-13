@@ -2,28 +2,32 @@ import requests
 
 
 def detect_intent(message):
-    """
-    Identify the type of support request from the customer's message.
-    """
-
     message = message.lower()
 
-    if any(word in message for word in [
+    order_keywords = [
         "where is my order",
+        "where is my package",
         "order status",
         "track my order",
         "tracking",
         "delivery",
-        "shipped"
-    ]):
-        return "ORDER_STATUS"
+        "shipped",
+        "package",
+        "parcel"
+    ]
 
-    if any(word in message for word in [
+    return_keywords = [
         "return",
         "refund",
         "money back",
-        "send back"
-    ]):
+        "send back",
+        "exchange"
+    ]
+
+    if any(keyword in message for keyword in order_keywords):
+        return "ORDER_STATUS"
+
+    if any(keyword in message for keyword in return_keywords):
         return "RETURN_REFUND"
 
     return "UNKNOWN"
