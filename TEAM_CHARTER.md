@@ -32,7 +32,23 @@
 
 ## 4. GitHub Workflow
 
-[Team contribution]
+### Git & GitHub Workflow Rules
+
+ 1. **Branch Management**
+   * Do not commit directly to `main`.
+   * Create feature branches using the naming format: `feature/<feature-name>` or `fix/<bug-name>`.
+
+ 2. **Keeping Branches Updated**
+   * Frequently pull/merge updates from `main` into your working branch to avoid large merge conflicts.
+   * Test your code locally after pulling updates before creating a PR.
+
+ 3. **Pull Requests (PRs) & Code Reviews**
+   * All code entering `main` requires a GitHub Pull Request.
+   * Include a short summary of changes and local test results in the PR description.
+   * Every PR must be reviewed and approved by at least one team member before merging.
+
+ 4. **Security & Secrets**
+   * Never commit API keys, database credentials, or `.env` files. Ensure `.gitignore` is active.
 
 ---
 
