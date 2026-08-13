@@ -84,16 +84,15 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
 DATABASES = {
-'default': {
+    'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('MYSQLDATABASE','railway'),
+        'NAME': os.getenv('MYSQLDATABASE', 'railway'),
         'USER': os.getenv('MYSQLUSER', 'root'),
-        'PASSWORD': os.getenv('MYSQLPASSWORD',),
+        'PASSWORD': os.getenv('MYSQLPASSWORD', ''),
         'HOST': os.getenv('MYSQLHOST', '127.0.0.1'),
         'PORT': os.getenv('MYSQLPORT', '3306'),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
