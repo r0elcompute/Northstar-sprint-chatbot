@@ -86,11 +86,16 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('MYSQLDATABASE', 'railway'),
-        'USER': os.getenv('MYSQLUSER', 'root'),
+        'NAME': os.getenv('MYSQLDATABASE', 'northstar_db'),
+        'USER': os.getenv('MYSQLUSER', 'avnadmin'),
         'PASSWORD': os.getenv('MYSQLPASSWORD', ''),
         'HOST': os.getenv('MYSQLHOST', '127.0.0.1'),
         'PORT': os.getenv('MYSQLPORT', '3306'),
+        'OPTIONS': {
+            'ssl': {
+                'ssl_mode': 'REQUIRED',
+            },
+        },
     }
 }
 
