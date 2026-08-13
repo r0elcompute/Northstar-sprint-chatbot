@@ -1,5 +1,7 @@
 import os
+import random
 import django
+from datetime import date, timedelta
 
 # Set up Django environment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
@@ -14,48 +16,108 @@ def seed_database():
     Product.objects.all().delete()
     Customer.objects.all().delete()
 
-    print("Seeding new test data...")
+    print("Seeding new test data (20 records per table)...")
 
-    # 1. Create 5 Customers
-    customers_data = [
-        {"name": "Jane Doe", "email": "jane@example.com", "phone": "+254700000001"},
-        {"name": "John Smith", "email": "john.smith@example.com", "phone": "+254700000002"},
-        {"name": "Alice Johnson", "email": "alice.j@example.com", "phone": "+254700000003"},
-        {"name": "Bob Williams", "email": "bob.w@example.com", "phone": "+254700000004"},
-        {"name": "Charlie Brown", "email": "charlie.b@example.com", "phone": "+254700000005"},
+    # 1. Seed 20 Customers
+    first_names = ["Jane", "John", "Alice", "Bob", "Charlie", "David", "Eva", "Frank", "Grace", "Hannah", 
+                   "Ian", "Julia", "Kevin", "Laura", "Michael", "Nora", "Oscar", "Pamela", "Quinn", "Rachel"]
+    last_names = ["Doe", "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez",
+                  "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson"]
+
+    customers = []
+    for i in range(20):
+        fname = first_names[i]
+        lname = last_names[i]
+        customer = Customer.objects.create(
+            name=f"{fname} {lname}",
+            email=f"{fname.lower()}.{lname.lower()}@example.com",
+            phone=f"+2547{random.randint(10000000, 99999999)}"
+        )
+        customers.append(customer)
+
+    # 2. Seed 20 Products
+    product_catalogue = [
+        ("Wireless Headphones", "Electronics", "Standard", 89.99),
+        ("Ergonomic Gaming Mouse", "Electronics", "Medium", 45.50),
+        ("Cotton Crewneck T-Shirt", "Apparel", "L", 19.99),
+        ("Stainless Steel Water Bottle", "Accessories", "750ml", 24.99),
+        ("Mechanical Keyboard", "Electronics", "Full-Size", 110.00),
+        ("Ultra-wide Monitor", "Electronics", "27-inch", 299.99),
+        ("Noise Cancelling Earbuds", "Electronics", "Small", 129.50),
+        ("Denim Jacket", "Apparel", "M", 65.00),
+        ("Slim Fit Chinos", "Apparel", "32x32", 42.00),
+        ("Running Shoes", "Apparel", "42 EU", 85.00),
+        ("Leather Wallet", "Accessories", "Compact", 35.00),
+        ("Canvas Backpack", "Accessories", "20L", 49.99),
+        ("Smartwatch Band", "Accessories", "22mm", 15.00),
+        ("USB-C Docking Station", "Electronics", "Standard", 75.00),
+        ("HD Webcam", "Electronics", "1080p", 55.00),
+        ("Desk Mat", "Accessories", "XL", 22.50),
+        ("Hooded Sweatshirt", "Apparel", "XL", 38.00),
+        ("Bluetooth Speaker", "Electronics", "Portable", 48.00),
+        ("Polarized Sunglasses", "Accessories", "One Size", 29.99),
+        ("Fitness Tracker", "Electronics", "Standard", 60.00),
     ]
-    customers = [Customer.objects.create(**c) for c in customers_data]
 
-    # 2. Create 5 Products
-    products_data = [
-        {"name": "Wireless Headphones", "category": "Electronics", "size": "Standard", "price": 89.99, "stock_quantity": 50},
-        {"name": "Ergonomic Gaming Mouse", "category": "Electronics", "size": "Medium", "price": 45.50, "stock_quantity": 120},
-        {"name": "Cotton Crewneck T-Shirt", "category": "Apparel", "size": "L", "price": 19.99, "stock_quantity": 200},
-        {"name": "Stainless Steel Water Bottle", "category": "Accessories", "size": "750ml", "price": 24.99, "stock_quantity": 80},
-        {"name": "Mechanical Keyboard", "category": "Electronics", "size": "Full-Size", "price": 110.00, "stock_quantity": 35},
+    products = []
+    for name, cat, size, price in product_catalogue:
+        product = Product.objects.create(
+            name=name,
+            category=cat,
+            size=size,
+            price=price,
+            stock_quantity=random.randint(5, 150)
+        )
+        products.append(product)
+
+    # 3. Seed 20 Orders (Order IDs 1001 to 1020)
+    order_statuses = ["PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"]
+    today = date.today()
+
+    orders = []
+    for i in range(20):
+        order_id = 1001 + i
+        customer = customers[i]  # Map 1:1 or use random.choice(customers)
+        product = random.choice(products)
+        quantity = random.randint(1, 3)
+        status = random.choice(order_statuses)
+        
+        # Delivery dates relative to today
+        delivery_offset = random.randint(-5, 10)
+        expected_delivery = today + timedelta(days=delivery_offset)
+
+        order = Order.objects.create(
+            order_id=order_id,
+            customer=customer,
+            product=product,
+            quantity=quantity,
+            status=status,
+            expected_delivery=expected_delivery
+        )
+        orders.append(order)
+
+    # 4. Seed 20 Return entries (linked across the 20 orders)
+    reasons = [
+        "Damaged packaging", "Wrong item delivered", "Defective product", 
+        "Changed mind", "Item arrived late", "Size did not fit"
     ]
-    products = [Product.objects.create(**p) for p in products_data]
+    return_statuses = ["REQUESTED", "APPROVED", "REJECTED", "COMPLETED"]
+    refund_statuses = ["PENDING", "PROCESSED", "REFUNDED", "FAILED"]
 
-    # 3. Create 5 Orders (Order IDs 1001 to 1005)
-    orders_data = [
-        {"order_id": 1001, "customer": customers[0], "product": products[0], "quantity": 1, "status": "SHIPPED", "expected_delivery": "2026-08-15"},
-        {"order_id": 1002, "customer": customers[1], "product": products[1], "quantity": 2, "status": "DELIVERED", "expected_delivery": "2026-08-10"},
-        {"order_id": 1003, "customer": customers[2], "product": products[2], "quantity": 3, "status": "PROCESSING", "expected_delivery": "2026-08-18"},
-        {"order_id": 1004, "customer": customers[3], "product": products[3], "quantity": 1, "status": "SHIPPED", "expected_delivery": "2026-08-14"},
-        {"order_id": 1005, "customer": customers[4], "product": products[4], "quantity": 1, "status": "DELIVERED", "expected_delivery": "2026-08-08"},
-    ]
-    orders = [Order.objects.create(**o) for o in orders_data]
+    # Pick 20 orders (with replacement or shuffle) to assign return requests
+    sampled_orders = random.choices(orders, k=20)
 
-    # 4. Create 3 Return entries linked to specific orders
-    returns_data = [
-        {"order": orders[0], "reason": "Damaged packaging", "return_status": "REQUESTED", "refund_status": "PENDING", "refund_amount": 89.99},
-        {"order": orders[1], "reason": "Wrong item delivered", "return_status": "APPROVED", "refund_status": "PROCESSED", "refund_amount": 91.00},
-        {"order": orders[4], "reason": "Defective key switch", "return_status": "COMPLETED", "refund_status": "REFUNDED", "refund_amount": 110.00},
-    ]
-    for r in returns_data:
-        Return.objects.create(**r)
+    for order in sampled_orders:
+        refund_amt = round(float(order.product.price) * order.quantity, 2)
+        Return.objects.create(
+            order=order,
+            reason=random.choice(reasons),
+            return_status=random.choice(return_statuses),
+            refund_status=random.choice(refund_statuses),
+            refund_amount=refund_amt
+        )
 
-    print("Database successfully seeded with 5 entries per main table!")
+    print("Database successfully seeded with 20 records per table!")
 
 if __name__ == '__main__':
     seed_database()
