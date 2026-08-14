@@ -26,7 +26,12 @@
 
 ## 3. Communication
 
-[Team contribution]
+- **Primary channel:** WhatsApp group. This is where day-to-day updates, questions, and blockers are posted.
+- **Tagging:** Use @mentions when a message needs a specific person's attention, so it doesn't get lost in general chat.
+- **Response time:** No strict SLA, but the team generally responds within the hour when active. If something is blocking your work and you haven't heard back, it's fine to follow up rather than wait indefinitely.
+- **Progress updates:** When you finish a piece of work or hit a milestone, post a short update in the group so the rest of the team knows what's ready to integrate against.
+- **Async-first:** Most coordination happens asynchronously in writing, so decisions and confirmations should be posted in the group, not just agreed verbally, so there's a record everyone can refer back to.
+- **Scheduled calls:** Used occasionally, typically when a written back-and-forth would be slower than just talking it through. See Section 9.
 
 ---
 
@@ -83,7 +88,10 @@ Any known issues are recorded.
 
 ## 9. Meetings and Progress Updates
 
-[Team contribution]
+- **Format:** Calls are scheduled as needed rather than on a fixed recurring basis — called when the team hits a decision point, blocker, or integration step that benefits from real-time discussion.
+- **Purpose:** Meetings are for things that are slow over chat: resolving disagreements, planning integration work, or unblocking someone stuck on a dependency from another member.
+- **Outside of calls:** Routine progress updates don't need a meeting — they go in the WhatsApp group as async status posts.
+- **After a call:** Any decision made verbally should be summarized back in the WhatsApp group afterward, so members who weren't on the call stay in sync.
 
 ---
 
