@@ -1,3 +1,5 @@
+import re
+
 import requests
 
 
@@ -13,7 +15,7 @@ def detect_intent(message):
         "delivery",
         "shipped",
         "package",
-        "parcel"
+        "parcel",
     ]
 
     return_keywords = [
@@ -21,7 +23,7 @@ def detect_intent(message):
         "refund",
         "money back",
         "send back",
-        "exchange"
+        "exchange",
     ]
 
     if any(keyword in message for keyword in order_keywords):
@@ -31,6 +33,21 @@ def detect_intent(message):
         return "RETURN_REFUND"
 
     return "UNKNOWN"
+
+
+def classify_intent_and_order(message):
+    """Return a normalized intent and any order number found in the message."""
+    intent = detect_intent(message)
+    order_id = None
+
+    match = re.search(r"\b(\d{1,10})\b", message or "")
+    if match:
+        order_id = int(match.group(1))
+
+    if intent == "UNKNOWN":
+        return {"intent": "general_inquiry", "order_id": order_id}
+
+    return {"intent": intent, "order_id": order_id}
 
 
 def get_order_information(order_id):
@@ -48,50 +65,47 @@ def get_order_information(order_id):
     return None
 
 
-def generate_response(message, order_id=None):
+def generate_response(message, order_data=None, order_id=None):
     """
     Route the customer's request and generate an automated response.
+    Supports both the older order_id contract and the newer order_data contract.
     """
 
-    intent = detect_intent(message)
+    intent = classify_intent_and_order(message).get("intent", detect_intent(message))
+    order = None
 
-    if intent == "UNKNOWN":
+    if order_data is not None:
+        order = order_data.get("data", order_data)
+    elif order_id is not None:
+        order_data = get_order_information(order_id)
+        order = order_data.get("data", order_data) if order_data else None
+
+    if intent in ("UNKNOWN", "general_inquiry"):
         return {
             "intent": intent,
             "response": (
                 "I'm sorry, I can currently help with "
                 "order status and returns/refunds."
-            )
+            ),
         }
 
-    if not order_id:
+    if not order:
         return {
             "intent": intent,
-            "response": "Sure! Please provide your order number."
+            "response": "Sure! Please provide your order number.",
         }
 
-    order_data = get_order_information(order_id)
-
-    if not order_data:
-        return {
-            "intent": intent,
-            "response": (
-                f"I couldn't find order #{order_id}. "
-                "Please check the order number and try again."
-            )
-        }
-
-    order = order_data["data"]
+    order_id_value = order.get("order_id") or order_id
 
     if intent == "ORDER_STATUS":
         return {
             "intent": intent,
             "response": (
-                f"Your order #{order['order_id']} is currently "
-                f"{order['status'].lower().replace('_', ' ')}. "
+                f"Your order #{order_id_value} is currently "
+                f"{str(order.get('status', 'unknown')).lower().replace('_', ' ')}. "
                 f"The expected delivery date is "
-                f"{order['expected_delivery']}."
-            )
+                f"{order.get('expected_delivery', 'not available')}."
+            ),
         }
 
     if intent == "RETURN_REFUND":
@@ -102,8 +116,8 @@ def generate_response(message, order_id=None):
                 "intent": intent,
                 "response": (
                     f"I couldn't find a return or refund record "
-                    f"for order #{order['order_id']}."
-                )
+                    f"for order #{order_id_value}."
+                ),
             }
 
         latest_return = returns[-1]
@@ -111,9 +125,14 @@ def generate_response(message, order_id=None):
         return {
             "intent": intent,
             "response": (
-                f"For order #{order['order_id']}, your return is "
-                f"{latest_return['return_status'].lower()}. "
+                f"For order #{order_id_value}, your return is "
+                f"{str(latest_return.get('return_status', 'unknown')).lower()}. "
                 f"Your refund status is "
-                f"{latest_return['refund_status'].lower()}."
-            )
+                f"{str(latest_return.get('refund_status', 'unknown')).lower()}."
+            ),
         }
+
+    return {
+        "intent": intent,
+        "response": "Thanks for reaching out. I can help with order updates and returns.",
+    }
