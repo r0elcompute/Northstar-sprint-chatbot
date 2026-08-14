@@ -58,10 +58,16 @@
 ---
 
 ## 5. Task Management
+* Assign each task to a specific team member.
+* Record every task on the GitHub Project Board with an owner, priority, deadline, and Definition of Done.
+* Break larger tasks into smaller and manageable activities.
+* Track tasks using the following status: **To Do → In Progress → In Review → Done**.
+* The assigned member should complete the task within the agreed deadline.
+* If a member anticipates a delay, they should inform the team early and agree on an appropriate solution.
+* A task is marked **Done** only after it meets its Definition of Done and has been reviewed where applicable.
 
-[Team contribution]
 
----
+
 
 ## 6. Definition of Done
 
@@ -83,10 +89,17 @@
 ---
 
 ## 8. Conflict Resolution
+* Address disagreements early through respectful and open communication.
+* Allow each member involved in a disagreement to explain their perspective.
+* Focus discussions on the task, project requirements, and team objectives rather than personal issues.
+* Work together to reach a fair solution or compromise.
+* If the members cannot resolve the issue, bring it to the entire team for discussion and a collective decision.
+* Record important decisions in the appropriate GitHub issue, project discussion, or team documentation.
+* Ensure that conflicts are resolved promptly so they do not delay the team's progress.
 
-[Team contribution]
 
----
+
+
 
 ## 9. Meetings and Progress Updates
 
