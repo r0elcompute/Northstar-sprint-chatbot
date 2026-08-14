@@ -59,15 +59,17 @@
 ---
 
 ## 6. Definition of Done
-The team should agree that a task is "Done" only when:
 
-The agreed work has been completed.
-The code/documentation has been committed to the member's branch.
-The change has been reviewed by another teammate where applicable.
-The PR has been approved and merged into main.
-The relevant documentation has been updated.
-The feature/task has been tested.
-Any known issues are recorded.
+### A task is considered Done when:
+
+1.The assigned work has been completed according to the task requirements.
+2.The work has been tested or verified.
+3.Required documentation has been updated.
+4.The work has been committed to the appropriate branch.
+5.A Pull Request has been created when required.
+6.Another teammate has reviewed the work where applicable.
+7.The approved changes have been merged into main.
+8.The corresponding Project Board item has been moved to Done.
 
 ## 7. Code Review and Pull Requests
 
@@ -95,6 +97,16 @@ Any known issues are recorded.
 
 ## 11. Contribution Tracking
 
+Team contributions will be tracked through GitHub using:
+
+1.Branches
+2.Commits
+3.Pull Requests
+4.Code/documentation reviews
+5.Issues/tasks
+6.Project Board updates
+
+Each member should work on assigned tasks and ensure their meaningful contributions are visible through the GitHub history.
 The team should track contributions through GitHub:
 
 Each member works primarily from their own feature/task branch.
