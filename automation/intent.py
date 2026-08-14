@@ -504,7 +504,7 @@ Write the appropriate Northstar customer-support response.
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
                 temperature=0.7,
-                max_output_tokens=220,
+                max_output_tokens=500,
             ),
         )
 
