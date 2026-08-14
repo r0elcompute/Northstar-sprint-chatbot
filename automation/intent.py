@@ -1,142 +1,505 @@
 import os
 import json
 import logging
+import re
+
+from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
+load_dotenv()
+
 logger = logging.getLogger(__name__)
 
-# Initialize Google GenAI client with a 10-second timeout to prevent request hanging
-client = genai.Client(
-    api_key=os.getenv("GEMINI_API_KEY"),
-    http_options=types.HttpOptions(timeout=10000)
-) if os.getenv("GEMINI_API_KEY") else None
 
+# ---------------------------------------------------------
+# Gemini client
+# ---------------------------------------------------------
+
+client = (
+    genai.Client(
+        api_key=os.getenv("GEMINI_API_KEY"),
+        http_options=types.HttpOptions(timeout=30000),
+    )
+    if os.getenv("GEMINI_API_KEY")
+    else None
+)
+
+
+# ---------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------
 
 def _coerce_plain_text(raw_value):
-    """Convert Gemini JSON-ish output into a plain conversational string."""
+    """Convert Gemini output into plain text."""
+
     if raw_value is None:
         return ""
 
     if isinstance(raw_value, str):
-        text = raw_value.strip()
-    elif isinstance(raw_value, dict):
+        return raw_value.strip()
+
+    if isinstance(raw_value, dict):
         for key in ("reply", "response", "text", "message"):
             if key in raw_value:
                 return _coerce_plain_text(raw_value[key])
+
         return json.dumps(raw_value, ensure_ascii=False)
-    elif isinstance(raw_value, list):
-        return " ".join(_coerce_plain_text(item) for item in raw_value if _coerce_plain_text(item))
+
+    if isinstance(raw_value, list):
+        values = []
+
+        for item in raw_value:
+            text = _coerce_plain_text(item)
+
+            if text:
+                values.append(text)
+
+        return " ".join(values)
+
+    return str(raw_value).strip()
+
+
+# ---------------------------------------------------------
+# Local classification fallback
+# ---------------------------------------------------------
+
+def _local_classification(message):
+    """
+    Classify common Northstar support messages locally.
+
+    This protects the chatbot when Gemini is unavailable,
+    times out, returns invalid data, or the API quota is reached.
+    """
+
+    msg = (message or "").lower()
+
+    order_id = None
+
+    # Extract numeric order ID.
+    match = re.search(r"\b(\d{1,10})\b", msg)
+
+    if match:
+        order_id = int(match.group(1))
+
+    # Return/refund requests must be checked first.
+    if any(
+        phrase in msg
+        for phrase in [
+            "return",
+            "refund",
+            "money back",
+            "send back",
+            "exchange",
+        ]
+    ):
+        intent = "return_refund"
+
+    # Shipping/delivery delay requests.
+    elif any(
+        phrase in msg
+        for phrase in [
+            "shipping delay",
+            "shipping is late",
+            "shipping late",
+            "delivery delay",
+            "delivery is late",
+            "delivery late",
+            "late delivery",
+            "delayed delivery",
+            "my delivery is late",
+            "my delivery is delayed",
+            "package is late",
+            "package is delayed",
+            "parcel is late",
+            "parcel is delayed",
+            "hasn't arrived",
+            "has not arrived",
+            "still waiting",
+        ]
+    ):
+        intent = "shipping_delay"
+
+    # Normal order-status requests.
+    elif any(
+        phrase in msg
+        for phrase in [
+            "track",
+            "tracking",
+            "order status",
+            "where is my order",
+            "check my order",
+            "check order",
+            "status of my order",
+        ]
+    ):
+        intent = "order_status"
+
     else:
-        text = str(raw_value).strip()
+        intent = "general_inquiry"
 
-    if text.startswith("{") or text.startswith("["):
-        try:
-            loaded = json.loads(text)
-            return _coerce_plain_text(loaded)
-        except (TypeError, ValueError):
-            return text
+    return {
+        "intent": intent,
+        "order_id": order_id,
+    }
 
-    return text
 
+# ---------------------------------------------------------
+# Intent classification
+# ---------------------------------------------------------
 
 def classify_intent_and_order(message: str) -> dict:
     """
-    Uses Gemini to classify intent and extract order ID.
-    Falls back to a lightweight local parser when the API is unavailable.
+    Classify customer intent and extract an order ID.
+
+    Gemini is attempted first.
+
+    If Gemini fails for any reason, including quota exhaustion,
+    the local classifier is used.
     """
+
+    # No API key -> local classification.
     if not client:
-        msg = (message or "").lower()
-        order_id = None
-        if any(token in msg for token in ["1001", "order 1001", "#1001"]):
-            order_id = 1001
-        return {"intent": "order_status", "order_id": order_id}
+        fallback = _local_classification(message)
+        print("LOCAL CLASSIFICATION:", fallback)
+        return fallback
 
     prompt = f"""
-    Analyze the following customer message and return only a valid JSON object with:
-    1. "intent": One of ["order_status", "return_refund", "shipping_delay", "general_inquiry"]
-    2. "order_id": Extract order ID number if present, otherwise null.
+Classify the following Northstar customer support message.
 
-    Customer Message: "{message}"
-    """
+Return ONLY one valid JSON object.
+Do not explain anything.
+Do not use markdown.
+Do not add any text before or after the JSON.
+
+The JSON must contain exactly these two fields:
+
+{{
+  "intent": "order_status",
+  "order_id": 1001
+}}
+
+Allowed intent values are ONLY:
+
+- "order_status"
+- "return_refund"
+- "shipping_delay"
+- "general_inquiry"
+
+Rules:
+
+- Use "order_status" when the customer wants to track or check the current status of an order.
+- Use "return_refund" when the customer wants to return an item, asks about a refund, asks for money back, or asks about an exchange.
+- Use "shipping_delay" when the customer says the delivery or shipping is late, delayed, or has not arrived.
+- Use "general_inquiry" for other questions.
+- Extract the numeric order ID when one is present.
+- If no order ID is present, use null.
+
+Customer message:
+{message}
+"""
+
     try:
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-3.6-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
-                temperature=0.1,
-                max_output_tokens=120,
+                temperature=0,
+                max_output_tokens=256,
+                response_mime_type="application/json",
             ),
         )
-        parsed = _coerce_plain_text(response.text)
-        try:
-            return json.loads(parsed)
-        except (TypeError, ValueError):
-            return {"intent": "general_inquiry", "order_id": None}
+
+        raw_response = response.text or ""
+        parsed_text = _coerce_plain_text(raw_response)
+
+        print("GEMINI RAW RESPONSE:", repr(parsed_text))
+
+        parsed = json.loads(parsed_text)
+
+        if not isinstance(parsed, dict):
+            raise ValueError(
+                "Gemini returned a non-object JSON response."
+            )
+
+        intent = parsed.get("intent")
+        order_id = parsed.get("order_id")
+
+        allowed_intents = {
+            "order_status",
+            "return_refund",
+            "shipping_delay",
+            "general_inquiry",
+        }
+
+        if intent not in allowed_intents:
+            raise ValueError(
+                f"Invalid intent returned by Gemini: {intent}"
+            )
+
+        if order_id is not None:
+            order_id = int(order_id)
+
+        return {
+            "intent": intent,
+            "order_id": order_id,
+        }
+
     except Exception as e:
-        logger.error(f"[intent.py] classify_intent_and_order error: {e}")
-        return {"intent": "general_inquiry", "order_id": None}
+        logger.error(
+            f"[intent.py] Gemini classification failed: {e}"
+        )
+
+        fallback = _local_classification(message)
+
+        print("LOCAL FALLBACK:", fallback)
+
+        return fallback
 
 
-def generate_human_response(message: str, order_data: dict = None) -> str:
+# ---------------------------------------------------------
+# Local response generation
+# ---------------------------------------------------------
+
+def _generate_local_response(
+    message: str,
+    order_snapshot: dict,
+    intent: str,
+) -> str:
     """
-    Generates a natural, human-like response using Gemini given customer input and order facts.
+    Generate a useful customer-facing response without Gemini.
+
+    This is the important fallback for API quota errors.
     """
-    order = order_data.get("data", order_data) if isinstance(order_data, dict) else None
+
+    # -----------------------------------------------------
+    # No order data
+    # -----------------------------------------------------
+
+    if not order_snapshot:
+
+        if intent == "return_refund":
+            return (
+                "Please provide your order number so I can check "
+                "your return or refund information."
+            )
+
+        if intent == "shipping_delay":
+            return (
+                "Please provide your order number so I can check "
+                "your delivery status."
+            )
+
+        if intent == "order_status":
+            return (
+                "Please provide your order number so I can check "
+                "your order status."
+            )
+
+        return (
+            "Thank you for contacting Northstar Support! "
+            "I can help with order status and returns or refunds. "
+            "What would you like to know?"
+        )
+
+    # -----------------------------------------------------
+    # Common order information
+    # -----------------------------------------------------
+
+    order_id = order_snapshot.get("order_id")
+    customer_name = order_snapshot.get("customer_name") or "there"
+    product_name = order_snapshot.get("product_name") or "your item"
+    quantity = order_snapshot.get("quantity")
+
+    status = (
+        str(order_snapshot.get("status") or "unknown")
+        .lower()
+        .replace("_", " ")
+    )
+
+    expected_delivery = (
+        order_snapshot.get("expected_delivery")
+        or "not available"
+    )
+
+    return_status = order_snapshot.get("return_status")
+    refund_status = order_snapshot.get("refund_status")
+
+    # -----------------------------------------------------
+    # RETURN / REFUND
+    # -----------------------------------------------------
+
+    if intent == "return_refund":
+
+        if return_status or refund_status:
+
+            return (
+                f"Hi {customer_name}! I checked order #{order_id}. "
+                f"Your return status is "
+                f"{return_status or 'not available'}, and your refund status is "
+                f"{refund_status or 'not available'}."
+            )
+
+        return (
+            f"Hi {customer_name}! I checked order #{order_id}, "
+            f"which contains {quantity or 'the'} {product_name}. "
+            "I couldn't find an existing return or refund record for this order. "
+            "If you'd like to start a return, I can help with the next steps."
+        )
+
+    # -----------------------------------------------------
+    # SHIPPING DELAY
+    # -----------------------------------------------------
+
+    if intent == "shipping_delay":
+
+        return (
+            f"Hi {customer_name}! I checked order #{order_id}. "
+            f"Your {product_name} is currently {status}, "
+            f"and the expected delivery date is {expected_delivery}."
+        )
+
+    # -----------------------------------------------------
+    # ORDER STATUS
+    # -----------------------------------------------------
+
+    if intent == "order_status":
+
+        return (
+            f"Hi {customer_name}! I checked order #{order_id} and your "
+            f"{product_name} is currently {status}. "
+            f"The expected delivery date is {expected_delivery}."
+        )
+
+    # -----------------------------------------------------
+    # GENERAL INQUIRY
+    # -----------------------------------------------------
+
+    return (
+        f"Hi {customer_name}! Thank you for contacting Northstar Support. "
+        "I can help with order status and returns or refunds. "
+        "What would you like to know?"
+    )
+
+
+# ---------------------------------------------------------
+# AI response generation
+# ---------------------------------------------------------
+
+def generate_human_response(
+    message: str,
+    order_data: dict = None,
+    intent: str = "general_inquiry",
+) -> str:
+    """
+    Generate a human-friendly customer-support response.
+
+    Gemini is used when available.
+
+    If Gemini fails, the local response generator is used
+    automatically instead of returning a generic error message.
+    """
+
+    order = (
+        order_data.get("data", order_data)
+        if isinstance(order_data, dict)
+        else None
+    )
+
     order_snapshot = {}
 
     if isinstance(order, dict):
+
         customer = order.get("customer") or {}
         product = order.get("product") or {}
         returns = order.get("returns") or []
+
         latest_return = returns[-1] if returns else {}
+
         order_snapshot = {
             "order_id": order.get("order_id"),
             "customer_name": customer.get("name"),
             "product_name": product.get("name"),
-            "expected_delivery": order.get("expected_delivery"),
+            "quantity": order.get("quantity"),
             "status": order.get("status"),
+            "expected_delivery": order.get("expected_delivery"),
+            "return_status": latest_return.get("return_status"),
             "refund_status": latest_return.get("refund_status"),
         }
 
+    # -----------------------------------------------------
+    # If Gemini is unavailable completely
+    # -----------------------------------------------------
+
     if not client:
-        if order_snapshot:
-            customer_name = order_snapshot.get("customer_name") or "there"
-            product_name = order_snapshot.get("product_name") or "your item"
-            expected_delivery = order_snapshot.get("expected_delivery") or "your expected date"
-            refund_status = order_snapshot.get("refund_status") or "being processed"
-            return (
-                f"Hi {customer_name}! I checked your order and your {product_name} is currently "
-                f"{str(order_snapshot.get('status', 'on the way')).lower().replace('_', ' ')}. "
-                f"The expected delivery date is {expected_delivery}, and your refund status is {str(refund_status).lower()}."
-            )
-        return "Thank you for contacting Northstar Support! How can I assist you with your order today?"
+
+        return _generate_local_response(
+            message=message,
+            order_snapshot=order_snapshot,
+            intent=intent,
+        )
+
+    # -----------------------------------------------------
+    # Gemini response generation
+    # -----------------------------------------------------
 
     system_instruction = (
         "You are Northstar Support's lead customer care specialist. "
-        "Read the order data strictly and accurately. Do not invent, swap, guess, or infer statuses that are not present. "
-        "When the payload includes multiple status fields, keep them distinct: order_status is the shipping delivery state, "
-        "return_status is the return process state, and refund_status is the refund state. "
-        "If refund_status is PENDING, say the refund is pending or processing; never say it failed. "
-        "If return_status is COMPLETED, acknowledge that the return was completed. "
-        "Use only the supplied facts and answer in 2-3 warm, professional, human sentences. "
-        "Keep the response plain conversational English, not JSON, not bullet points, and not raw database dumps."
+
+        "The customer's intent is explicitly provided. "
+        "You MUST answer according to that intent. "
+
+        "If the intent is order_status, discuss the order's "
+        "shipping or delivery status. "
+
+        "If the intent is return_refund, discuss the return or "
+        "refund information. Do NOT answer a return/refund "
+        "question with only the shipping status. "
+
+        "If the intent is shipping_delay, discuss the delivery "
+        "or shipping timing. "
+
+        "Use only the supplied order facts. "
+        "Never invent a return, refund, status, date, product, "
+        "quantity, or customer detail. "
+
+        "Keep order status, return status, and refund status distinct. "
+
+        "If there is no return or refund record, clearly explain "
+        "that no return or refund record was found. "
+
+        "Use the customer's actual name from the order data when available. "
+        "Do not assume the customer is named Jane. "
+
+        "Respond in 2-3 warm, professional sentences. "
+        "Use plain conversational English. "
+        "Do not return JSON, bullet points, or database dumps."
     )
 
     context_str = ""
+
     if order_snapshot:
-        context_str = f"\nOrder Context (Internal Data): {json.dumps(order_snapshot, indent=2)}\n"
+        context_str = (
+            "\nOrder Context:\n"
+            f"{json.dumps(order_snapshot, indent=2)}\n"
+        )
 
     user_prompt = f"""
-    {context_str}
-    Customer Message: "{message}"
+Customer Intent:
+{intent}
 
-    Draft a warm, helpful 2-3 sentence customer care reply in plain English. Do not return JSON or a dict.
-    """
+{context_str}
+
+Customer Message:
+{message}
+
+Write the appropriate Northstar customer-support response.
+"""
 
     try:
+
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-3.6-flash",
             contents=user_prompt,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
@@ -144,48 +507,99 @@ def generate_human_response(message: str, order_data: dict = None) -> str:
                 max_output_tokens=220,
             ),
         )
-        return _coerce_plain_text(response.text)
+
+        result = _coerce_plain_text(response.text)
+
+        if result:
+            return result
+
+        raise ValueError(
+            "Gemini returned an empty response."
+        )
+
     except Exception as e:
-        logger.error(f"[intent.py] generate_human_response error: {e}")
-        if order_snapshot:
-            customer_name = order_snapshot.get("customer_name") or "there"
-            product_name = order_snapshot.get("product_name") or "your item"
-            expected_delivery = order_snapshot.get("expected_delivery") or "your expected date"
-            refund_status = order_snapshot.get("refund_status") or "being processed"
-            return (
-                f"Hi {customer_name}! I checked your order and your {product_name} is currently "
-                f"{str(order_snapshot.get('status', 'on the way')).lower().replace('_', ' ')}. "
-                f"The expected delivery date is {expected_delivery}, and your refund status is {str(refund_status).lower()}."
-            )
-        return (
-            "Thank you for contacting Northstar Support! I'm having a brief issue pulling "
-            "up your details, but our support team has received your message and will update you shortly."
+
+        logger.error(
+            f"[intent.py] generate_human_response error: {e}"
+        )
+
+        # IMPORTANT:
+        # If Gemini fails because of quota, timeout, network,
+        # or any other error, use the useful local response.
+        print(
+            "[intent.py] Gemini response generation failed. "
+            "Using local response fallback."
+        )
+
+        return _generate_local_response(
+            message=message,
+            order_snapshot=order_snapshot,
+            intent=intent,
         )
 
 
-def generate_response(message: str, order_data: dict = None) -> str:
+# ---------------------------------------------------------
+# Public response function
+# ---------------------------------------------------------
+
+def generate_response(
+    message: str,
+    order_data: dict = None,
+    intent: str = None,
+) -> str:
     """
-    Public entry point called by ChatAPIView.
-    Uses Gemini to craft a warm, human-like response backed by order context.
+    Public entry point used by ChatAPIView.
     """
-    return generate_human_response(message, order_data=order_data)
+
+    if intent is None:
+
+        parsed = classify_intent_and_order(message)
+
+        intent = parsed.get(
+            "intent",
+            "general_inquiry",
+        )
+
+    return generate_human_response(
+        message,
+        order_data=order_data,
+        intent=intent,
+    )
 
 
-def process_customer_ticket(message: str, fetch_order_fn=None) -> str:
+# ---------------------------------------------------------
+# Full automation pipeline
+# ---------------------------------------------------------
+
+def process_customer_ticket(
+    message: str,
+    fetch_order_fn=None,
+) -> str:
     """
-    Main orchestration loop:
-    1. Parse intent & order ID
-    2. Retrieve order records
-    3. Generate human response via Gemini
+    Full Northstar automation pipeline:
+
+    1. Classify customer intent.
+    2. Extract order ID.
+    3. Retrieve order information.
+    4. Generate an intent-aware response.
     """
-    # 1. Parse message
+
     parsed = classify_intent_and_order(message)
+
+    intent = parsed.get(
+        "intent",
+        "general_inquiry",
+    )
+
     order_id = parsed.get("order_id")
 
-    # 2. Fetch order data if available
     order_data = None
+
     if order_id and fetch_order_fn:
         order_data = fetch_order_fn(order_id)
 
-    # 3. Ask Gemini to write human response
-    return generate_human_response(message, order_data)
+    return generate_human_response(
+        message,
+        order_data=order_data,
+        intent=intent,
+    )
