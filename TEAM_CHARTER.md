@@ -83,10 +83,26 @@
 8. The corresponding Project Board item has been moved to Done.
 
 ## 7. Code Review and Pull Requests
+**Code Review**
 
-[Team contribution]
+* All contributions should be reviewed by at least one other team member before being merged into the main branch.
+* Team members should review changes for correctness, completeness, clarity, and adherence to the team's agreed requirements.
+* Reviewers should provide constructive feedback and clearly explain any changes that need to be made.
+* The contributor should address all review comments before the Pull Request is approved.
+* Reviews should be completed within the agreed timeframe to avoid delaying the team's progress.
 
----
+**Pull Requests**
+
+* Each team member should create a Pull Request from their assigned feature branch to the main branch after completing their work.
+* Pull Requests should have a clear and descriptive title explaining the contribution.
+* The Pull Request description should briefly explain what was changed.
+* A Pull Request should not be merged until the required review has been completed and any requested changes have been addressed.
+* Team members should avoid merging their own Pull Requests without the required review.
+* Once the Pull Request is approved and the work meets the Definition of Done, it can be merged into the main branch.
+* The GitHub Pull Request history will provide a record of contributions, reviews, feedback, and approvals throughout the project.
+
+
+
 
 ## 8. Conflict Resolution
 * Address disagreements early through respectful and open communication.
