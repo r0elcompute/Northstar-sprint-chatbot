@@ -16,3 +16,4 @@ whitenoise
 django
 mysqlclient
 python-dotenv
+google-genai
