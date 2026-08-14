@@ -8,11 +8,12 @@
 
 **Team Members:** 
 
- 1. Christine Wanja
- 2. Fanuel Rhogers
- 3. Constance Mukenyi
- 4. Didymus Kiai
-Rachae Hinga
+1. Christine Wanja
+2. Fanuel Rhogers
+3. Constance Mukenyi
+4. Didymus Kiai
+5. Rachael Hinga
+
 
 **Project Repository:** 
 
