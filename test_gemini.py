@@ -2,15 +2,26 @@ import os
 from dotenv import load_dotenv
 from google import genai
 
-load_dotenv()
 
-api_key = os.environ.get("GEMINI_API_KEY")
+def main():
+    load_dotenv()
 
-client = genai.Client(api_key=api_key)
+    api_key = os.getenv("GEMINI_API_KEY")
 
-response = client.models.generate_content(
-    model="gemini-3.6-flash",
-    contents="Say hello and tell me you are ready to help build my chatbot."
-)
+    if not api_key:
+        print("GEMINI_API_KEY is not set.")
+        return
 
-print(response.text)
+    client = genai.Client(api_key=api_key)
+
+    response = client.models.generate_content(
+        model="gemini-3.6-flash",
+        contents='Return exactly this JSON and nothing else: {"intent":"order_status","order_id":1001}',
+    )
+
+    print("RAW RESPONSE:")
+    print(repr(response.text))
+
+
+if __name__ == "__main__":
+    main()
