@@ -73,14 +73,14 @@
 
 ### A task is considered Done when:
 
-1.The assigned work has been completed according to the task requirements.
-2.The work has been tested or verified.
-3.Required documentation has been updated.
-4.The work has been committed to the appropriate branch.
-5.A Pull Request has been created when required.
-6.Another teammate has reviewed the work where applicable.
-7.The approved changes have been merged into main.
-8.The corresponding Project Board item has been moved to Done.
+1. The assigned work has been completed according to the task requirements.
+2. The work has been tested or verified.
+3. Required documentation has been updated.
+4. The work has been committed to the appropriate branch.
+5. A Pull Request has been created when required.
+6. Another teammate has reviewed the work where applicable.
+7. The approved changes have been merged into main.
+8. The corresponding Project Board item has been moved to Done.
 
 ## 7. Code Review and Pull Requests
 
@@ -112,33 +112,31 @@
 
 ## 10. Accountability
 
-[Team contribution]
-
----
+- Each team member is responsible for completing their assigned tasks within the agreed deadline.
+- Team members should communicate early if they encounter blockers or expect delays.
+- Each member should keep their assigned GitHub tasks and Project Board status up to date.
+- Team members are responsible for testing and documenting their own contributions before requesting review.
+- Team members should respond to reasonable requests for review, clarification, or assistance from other members.
+- If a member is unable to complete an assigned task, they should inform the team as early as possible so the task can be reassigned or an alternative solution can be agreed upon.
+- Accountability will be based on task ownership, communication, completed work, and adherence to the agreed GitHub workflow.
 
 ## 11. Contribution Tracking
 
-Team contributions will be tracked through GitHub using:
+Team contributions will be tracked through GitHub and the Project Board.
 
-1.Branches
-2.Commits
-3.Pull Requests
-4.Code/documentation reviews
-5.Issues/tasks
-6.Project Board updates
+Each team member should:
 
-Each member should work on assigned tasks and ensure their meaningful contributions are visible through the GitHub history.
-The team should track contributions through GitHub:
+1. Work primarily from their assigned feature or task branch.
+2. Make meaningful changes through clear and descriptive commits.
+3. Create Pull Requests for changes that need to be integrated into main.
+4. Clearly describe what was changed and why in Pull Requests.
+5. Participate in code and documentation reviews where applicable.
+6. Keep assigned issues and Project Board tasks updated.
+7. Move tasks through the agreed workflow: To Do → In Progress → In Review → Done.
+8. Ensure completed work is visible through commits, Pull Requests, reviews, issues, and Project Board updates.
+9. Avoid directly overwriting another team member's work without communication and agreement.
 
-Each member works primarily from their own feature/task branch.
-Each meaningful change should have a GitHub commit.
-Larger changes should use a Pull Request.
-PRs should identify what was changed and why.
-Teammates review each other's PRs.
-Issues/tasks are assigned to an owner.
-The Project Board records status: Todo → In Progress → Review → Done.
-Contributions should be visible through commits, PRs, reviews, and completed tasks.
-Team members should not directly overwrite another person's work.
+GitHub history and the Project Board will provide a shared record of individual contributions throughout the project.
 
 ## 12. Team Agreement
 
