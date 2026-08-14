@@ -47,11 +47,15 @@ def _coerce_plain_text(raw_value):
         return json.dumps(raw_value, ensure_ascii=False)
 
     if isinstance(raw_value, list):
-        return " ".join(
-            _coerce_plain_text(item)
-            for item in raw_value
-            if _coerce_plain_text(item)
-        )
+        values = []
+
+        for item in raw_value:
+            text = _coerce_plain_text(item)
+
+            if text:
+                values.append(text)
+
+        return " ".join(values)
 
     return str(raw_value).strip()
 
@@ -65,20 +69,20 @@ def _local_classification(message):
     Classify common Northstar support messages locally.
 
     This protects the chatbot when Gemini is unavailable,
-    times out, or the API quota has been reached.
+    times out, returns invalid data, or the API quota is reached.
     """
 
     msg = (message or "").lower()
 
     order_id = None
 
-    # Extract the first numeric order ID.
+    # Extract numeric order ID.
     match = re.search(r"\b(\d{1,10})\b", msg)
 
     if match:
         order_id = int(match.group(1))
 
-    # Return/refund must be checked first.
+    # Return/refund requests must be checked first.
     if any(
         phrase in msg
         for phrase in [
@@ -91,7 +95,7 @@ def _local_classification(message):
     ):
         intent = "return_refund"
 
-    # Shipping delay must come before general delivery/order-status.
+    # Shipping/delivery delay requests.
     elif any(
         phrase in msg
         for phrase in [
@@ -112,7 +116,6 @@ def _local_classification(message):
             "hasn't arrived",
             "has not arrived",
             "still waiting",
-            "where is my package",
         ]
     ):
         intent = "shipping_delay"
@@ -147,16 +150,15 @@ def _local_classification(message):
 
 def classify_intent_and_order(message: str) -> dict:
     """
-    Classify the customer's intent and extract an order ID.
+    Classify customer intent and extract an order ID.
 
-    Gemini is used first.
+    Gemini is attempted first.
 
-    If Gemini fails, returns invalid JSON, times out,
-    or the API quota is exhausted, the local classifier
-    is used instead.
+    If Gemini fails for any reason, including quota exhaustion,
+    the local classifier is used.
     """
 
-    # If no Gemini API key exists, use local classification.
+    # No API key -> local classification.
     if not client:
         fallback = _local_classification(message)
         print("LOCAL CLASSIFICATION:", fallback)
@@ -196,8 +198,6 @@ Rules:
 Customer message:
 {message}
 """
-
-    parsed_text = ""
 
     try:
         response = client.models.generate_content(
@@ -258,6 +258,131 @@ Customer message:
 
 
 # ---------------------------------------------------------
+# Local response generation
+# ---------------------------------------------------------
+
+def _generate_local_response(
+    message: str,
+    order_snapshot: dict,
+    intent: str,
+) -> str:
+    """
+    Generate a useful customer-facing response without Gemini.
+
+    This is the important fallback for API quota errors.
+    """
+
+    # -----------------------------------------------------
+    # No order data
+    # -----------------------------------------------------
+
+    if not order_snapshot:
+
+        if intent == "return_refund":
+            return (
+                "Please provide your order number so I can check "
+                "your return or refund information."
+            )
+
+        if intent == "shipping_delay":
+            return (
+                "Please provide your order number so I can check "
+                "your delivery status."
+            )
+
+        if intent == "order_status":
+            return (
+                "Please provide your order number so I can check "
+                "your order status."
+            )
+
+        return (
+            "Thank you for contacting Northstar Support! "
+            "I can help with order status and returns or refunds. "
+            "What would you like to know?"
+        )
+
+    # -----------------------------------------------------
+    # Common order information
+    # -----------------------------------------------------
+
+    order_id = order_snapshot.get("order_id")
+    customer_name = order_snapshot.get("customer_name") or "there"
+    product_name = order_snapshot.get("product_name") or "your item"
+    quantity = order_snapshot.get("quantity")
+
+    status = (
+        str(order_snapshot.get("status") or "unknown")
+        .lower()
+        .replace("_", " ")
+    )
+
+    expected_delivery = (
+        order_snapshot.get("expected_delivery")
+        or "not available"
+    )
+
+    return_status = order_snapshot.get("return_status")
+    refund_status = order_snapshot.get("refund_status")
+
+    # -----------------------------------------------------
+    # RETURN / REFUND
+    # -----------------------------------------------------
+
+    if intent == "return_refund":
+
+        if return_status or refund_status:
+
+            return (
+                f"Hi {customer_name}! I checked order #{order_id}. "
+                f"Your return status is "
+                f"{return_status or 'not available'}, and your refund status is "
+                f"{refund_status or 'not available'}."
+            )
+
+        return (
+            f"Hi {customer_name}! I checked order #{order_id}, "
+            f"which contains {quantity or 'the'} {product_name}. "
+            "I couldn't find an existing return or refund record for this order. "
+            "If you'd like to start a return, I can help with the next steps."
+        )
+
+    # -----------------------------------------------------
+    # SHIPPING DELAY
+    # -----------------------------------------------------
+
+    if intent == "shipping_delay":
+
+        return (
+            f"Hi {customer_name}! I checked order #{order_id}. "
+            f"Your {product_name} is currently {status}, "
+            f"and the expected delivery date is {expected_delivery}."
+        )
+
+    # -----------------------------------------------------
+    # ORDER STATUS
+    # -----------------------------------------------------
+
+    if intent == "order_status":
+
+        return (
+            f"Hi {customer_name}! I checked order #{order_id} and your "
+            f"{product_name} is currently {status}. "
+            f"The expected delivery date is {expected_delivery}."
+        )
+
+    # -----------------------------------------------------
+    # GENERAL INQUIRY
+    # -----------------------------------------------------
+
+    return (
+        f"Hi {customer_name}! Thank you for contacting Northstar Support. "
+        "I can help with order status and returns or refunds. "
+        "What would you like to know?"
+    )
+
+
+# ---------------------------------------------------------
 # AI response generation
 # ---------------------------------------------------------
 
@@ -269,9 +394,10 @@ def generate_human_response(
     """
     Generate a human-friendly customer-support response.
 
-    The intent is explicitly supplied so a return/refund
-    request cannot accidentally receive only an order-status
-    response.
+    Gemini is used when available.
+
+    If Gemini fails, the local response generator is used
+    automatically instead of returning a generic error message.
     """
 
     order = (
@@ -302,99 +428,15 @@ def generate_human_response(
         }
 
     # -----------------------------------------------------
-    # Local response fallback
+    # If Gemini is unavailable completely
     # -----------------------------------------------------
 
     if not client:
 
-        # RETURN / REFUND
-        if intent == "return_refund":
-
-            if not order_snapshot:
-                return (
-                    "Please provide your order number so I can check "
-                    "your return or refund information."
-                )
-
-            return_status = order_snapshot.get("return_status")
-            refund_status = order_snapshot.get("refund_status")
-
-            if not return_status and not refund_status:
-                return (
-                    f"I checked order #{order_snapshot.get('order_id')}, "
-                    "but I couldn't find an existing return or refund record. "
-                    "If you'd like to start a return, I can help with the next steps."
-                )
-
-            return (
-                f"I checked order #{order_snapshot.get('order_id')}. "
-                f"Your return status is "
-                f"{return_status or 'not available'}, and your refund status is "
-                f"{refund_status or 'not available'}."
-            )
-
-        # SHIPPING DELAY
-        if intent == "shipping_delay":
-
-            if not order_snapshot:
-                return (
-                    "Please provide your order number so I can check "
-                    "the delivery status."
-                )
-
-            customer_name = order_snapshot.get("customer_name") or "there"
-            status = (
-                str(order_snapshot.get("status", "unknown"))
-                .lower()
-                .replace("_", " ")
-            )
-            expected_delivery = (
-                order_snapshot.get("expected_delivery")
-                or "not available"
-            )
-
-            return (
-                f"Hi {customer_name}! I checked order "
-                f"#{order_snapshot.get('order_id')}, and its current status "
-                f"is {status}. The expected delivery date is "
-                f"{expected_delivery}."
-            )
-
-        # ORDER STATUS
-        if intent == "order_status":
-
-            if not order_snapshot:
-                return (
-                    "Please provide your order number so I can check "
-                    "your order status."
-                )
-
-            customer_name = order_snapshot.get("customer_name") or "there"
-
-            status = (
-                str(order_snapshot.get("status", "unknown"))
-                .lower()
-                .replace("_", " ")
-            )
-
-            expected_delivery = (
-                order_snapshot.get("expected_delivery")
-                or "not available"
-            )
-
-            return (
-                f"Hi {customer_name}! I checked order "
-                f"#{order_snapshot.get('order_id')} and your "
-                f"{order_snapshot.get('product_name') or 'item'} is currently "
-                f"{status}. The expected delivery date is "
-                f"{expected_delivery}."
-            )
-
-        # GENERAL INQUIRY
-        return (
-            "Thank you for contacting Northstar Support! "
-            "I can help with order status and returns or refunds. "
-            "What would you like to know?"
+        return _generate_local_response(
+            message=message,
+            order_snapshot=order_snapshot,
+            intent=intent,
         )
 
     # -----------------------------------------------------
@@ -427,7 +469,7 @@ def generate_human_response(
         "that no return or refund record was found. "
 
         "Use the customer's actual name from the order data when available. "
-        "Do not assume the customer's name is Jane. "
+        "Do not assume the customer is named Jane. "
 
         "Respond in 2-3 warm, professional sentences. "
         "Use plain conversational English. "
@@ -466,7 +508,14 @@ Write the appropriate Northstar customer-support response.
             ),
         )
 
-        return _coerce_plain_text(response.text)
+        result = _coerce_plain_text(response.text)
+
+        if result:
+            return result
+
+        raise ValueError(
+            "Gemini returned an empty response."
+        )
 
     except Exception as e:
 
@@ -474,53 +523,18 @@ Write the appropriate Northstar customer-support response.
             f"[intent.py] generate_human_response error: {e}"
         )
 
-        # Safe response if Gemini response generation fails.
-        if intent == "return_refund":
+        # IMPORTANT:
+        # If Gemini fails because of quota, timeout, network,
+        # or any other error, use the useful local response.
+        print(
+            "[intent.py] Gemini response generation failed. "
+            "Using local response fallback."
+        )
 
-            if order_snapshot:
-                return (
-                    f"I checked order #{order_snapshot.get('order_id')}, "
-                    "but I'm having trouble generating the full return/refund "
-                    "response right now. Please try again shortly."
-                )
-
-            return (
-                "I'm having trouble checking the return or refund information "
-                "right now. Please provide your order number and try again."
-            )
-
-        if intent == "shipping_delay":
-
-            if order_snapshot:
-                return (
-                    f"I checked order #{order_snapshot.get('order_id')}, "
-                    "but I'm having trouble generating the full delivery "
-                    "response right now. Please try again shortly."
-                )
-
-            return (
-                "I'm having trouble checking the delivery information "
-                "right now. Please provide your order number and try again."
-            )
-
-        if intent == "order_status":
-
-            if order_snapshot:
-                return (
-                    f"I checked order #{order_snapshot.get('order_id')}, "
-                    "but I'm having trouble generating the full order-status "
-                    "response right now. Please try again shortly."
-                )
-
-            return (
-                "I'm having trouble checking the order status right now. "
-                "Please provide your order number and try again."
-            )
-
-        return (
-            "Thank you for contacting Northstar Support! "
-            "I'm having a brief issue processing your request. "
-            "Please try again shortly."
+        return _generate_local_response(
+            message=message,
+            order_snapshot=order_snapshot,
+            intent=intent,
         )
 
 
@@ -538,7 +552,9 @@ def generate_response(
     """
 
     if intent is None:
+
         parsed = classify_intent_and_order(message)
+
         intent = parsed.get(
             "intent",
             "general_inquiry",
