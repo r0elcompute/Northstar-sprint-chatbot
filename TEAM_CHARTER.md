@@ -13,16 +13,27 @@
 ---
 
 ## 1. Team Purpose
+* The purpose of the team is to work collaboratively to complete Assignment 1 and produce a clear, well-organized, and high-quality Team Charter.
+* The team will use GitHub to coordinate tasks, document individual contributions, manage the project workflow, and maintain transparency throughout the assignment.
+* Each member will contribute to the team's objectives through their assigned responsibilities, timely communication, and active participation.
+* The team aims to complete all agreed tasks within the set deadlines while maintaining effective collaboration, accountability, and respect among members.
+* The final Team Charter will represent the collective agreement and contribution of all five team members.
 
-[Team contribution]
 
----
+
+
 
 ## 2. Team Roles and Responsibilities
 
-[Team contribution]
+*Member 1 Team Charter Coordination | Coordinate the Team Charter, organize the team's structure, and ensure all sections are combined into the final document. |
+*Member 2 | Communication & Meetings | Coordinate team communication, organize meetings, record important discussions, and share relevant updates with team members. |
+*Member 3 | Git/GitHub Workflow | Guide the team on Git and GitHub practices, including branches, commits, repository management, and contribution workflow. |
+*Member 4 | Task Management & Deadlines | Manage task assignments, track deadlines, monitor progress on the GitHub Project Board, and ensure tasks have clear Definitions of Done. |
+*Member 5 | Conflict Resolution & Accountability | Help resolve team disagreements, encourage constructive communication, and support the team in addressing issues that affect project progress. |
 
----
+
+
+
 
 ## 3. Communication
 
@@ -155,11 +166,29 @@ Each team member should:
 GitHub history and the Project Board will provide a shared record of individual contributions throughout the project.
 
 ## 12. Team Agreement
+ * All team members agree to actively participate in the assignment and contribute to the team's goals.
+* Each member will complete their assigned tasks within the agreed deadlines.
+* Team members will communicate respectfully and maintain clear communication throughout the project.
+* All members will follow the agreed Git and GitHub workflow when contributing to the repository.
+* Team members will review and provide constructive feedback on each other's work.
+* Decisions will be discussed and agreed upon collectively whenever possible.
+* Members will communicate early if they experience challenges that may affect their tasks or deadlines.
+* All team members agree to maintain transparency in their contributions through GitHub commits, branches, and Pull Requests.
+* The team will respect different opinions and work collaboratively to resolve disagreements.
+* All members agree to follow the final decisions made by the team regarding the assignment.
 
-[Team contribution]
 
----
+
 
 ## Sign-Off
+**Team Agreement Sign-Off**
+By signing below, each team member confirms that they have read, understood, and agreed to follow the terms outlined in this Team Charter.
 
-[Team contribution]
+ *Member | Role | Signature | Date |
+ *Member 1 | Team Charter Coordination | __________________ | __________ |
+ *Member 2 | Communication & Meetings | __________________ | __________ |
+ *Member 3 | Git/GitHub Workflow | __________________ | __________ |
+ *Member 4 | Task Management & Deadlines | __________________ | __________ |
+ *Member 5 | Conflict Resolution & Accountability | __________________ | __________ |
+
+
