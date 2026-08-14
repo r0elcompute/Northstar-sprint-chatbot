@@ -2,15 +2,20 @@
 
 ## Team Information
 
-**Team Name:** [Team to decide]
+**Team Name:** Titan-devs
 
-**Project:** Northstar Retail Co. Support Chatbot
+**Project:** Northstar-sprint-chatbot
 
-**Team Members:** [Team to complete]
+**Team Members:** 
+1.Christine Wanja
+2.Fanuel Rhogers
+3.Constance Mukenyi
+4.Didymus Kiai
+Rachae Hinga
 
-**Project Repository:** [Team to complete]
+**Project Repository:** 
 
----
+https://github.com/titan-devs/Northstar-sprint-chatbot
 
 ## 1. Team Purpose
 * The purpose of the team is to work collaboratively to complete Assignment 1 and produce a clear, well-organized, and high-quality Team Charter.
