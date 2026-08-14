@@ -60,7 +60,7 @@
 
 ## 6. Definition of Done
 
-A task is considered Done when:
+### A task is considered Done when:
 
 1.The assigned work has been completed according to the task requirements.
 2.The work has been tested or verified.
@@ -107,6 +107,17 @@ Team contributions will be tracked through GitHub using:
 6.Project Board updates
 
 Each member should work on assigned tasks and ensure their meaningful contributions are visible through the GitHub history.
+The team should track contributions through GitHub:
+
+Each member works primarily from their own feature/task branch.
+Each meaningful change should have a GitHub commit.
+Larger changes should use a Pull Request.
+PRs should identify what was changed and why.
+Teammates review each other's PRs.
+Issues/tasks are assigned to an owner.
+The Project Board records status: Todo → In Progress → Review → Done.
+Contributions should be visible through commits, PRs, reviews, and completed tasks.
+Team members should not directly overwrite another person's work.
 
 ## 12. Team Agreement
 
