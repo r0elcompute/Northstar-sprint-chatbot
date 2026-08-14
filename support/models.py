@@ -24,7 +24,7 @@ class Order(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     order_date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=50)
-    expected_delivery = models.DateField()
+    expected_delivery = models.DateField(null=True, blank=True)
 
 class Return(models.Model):
     return_id = models.AutoField(primary_key=True)

@@ -1,7 +1,5 @@
 import re
 
-import requests
-
 
 def detect_intent(message):
     message = message.lower()
@@ -52,17 +50,30 @@ def classify_intent_and_order(message):
 
 def get_order_information(order_id):
     """
-    Retrieve order information from the Northstar Django API.
+    Retrieve order information directly from the database.
+
+    This used to make an HTTP request back to this same Django server
+    (http://127.0.0.1:8000/api/v1/orders/<id>/). On a single-threaded dev
+    server that call blocks on itself: the in-flight request handling the
+    chat message can't also serve the second connection, so it hangs until
+    the 5s timeout and surfaces as a 504. Since this code already lives in
+    the same app as the Order model, querying it directly removes the
+    network round-trip (and the deadlock) entirely.
     """
+    from .models import Order
+    from .serializers import OrderSerializer
 
-    url = f"http://127.0.0.1:8000/api/v1/orders/{order_id}/"
+    try:
+        order = (
+            Order.objects
+            .select_related('customer', 'product')
+            .prefetch_related('returns')
+            .get(order_id=order_id)
+        )
+    except Order.DoesNotExist:
+        return None
 
-    response = requests.get(url, timeout=5)
-
-    if response.status_code == 200:
-        return response.json()
-
-    return None
+    return {"status": "success", "data": OrderSerializer(order).data}
 
 
 def generate_response(message, order_data=None, order_id=None):

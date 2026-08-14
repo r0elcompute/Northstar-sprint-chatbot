@@ -78,6 +78,31 @@ def classify_intent_and_order(message: str) -> dict:
         return {"intent": "general_inquiry", "order_id": None}
 
 
+def _fallback_response(order_snapshot: dict) -> str:
+    """
+    Deterministic template used when Gemini is unavailable or errors out.
+    Only mentions return/refund status when a Return record actually exists.
+    """
+    if not order_snapshot:
+        return "Thank you for contacting Northstar Support! How can I assist you with your order today?"
+
+    customer_name = order_snapshot.get("customer_name") or "there"
+    product_name = order_snapshot.get("product_name") or "your item"
+    expected_delivery = order_snapshot.get("expected_delivery") or "your expected date"
+    status = str(order_snapshot.get("status") or "on the way").lower().replace("_", " ")
+
+    reply = (
+        f"Hi {customer_name}! I checked your order and your {product_name} is currently "
+        f"{status}. The expected delivery date is {expected_delivery}."
+    )
+
+    if "refund_status" in order_snapshot:
+        refund_status = str(order_snapshot.get("refund_status") or "being processed").lower()
+        reply += f" Your refund status is {refund_status}."
+
+    return reply
+
+
 def generate_human_response(message: str, order_data: dict = None) -> str:
     """
     Generates a natural, human-like response using Gemini given customer input and order facts.
@@ -89,28 +114,24 @@ def generate_human_response(message: str, order_data: dict = None) -> str:
         customer = order.get("customer") or {}
         product = order.get("product") or {}
         returns = order.get("returns") or []
-        latest_return = returns[-1] if returns else {}
+        latest_return = returns[-1] if returns else None
         order_snapshot = {
             "order_id": order.get("order_id"),
             "customer_name": customer.get("name"),
             "product_name": product.get("name"),
             "expected_delivery": order.get("expected_delivery"),
             "status": order.get("status"),
-            "refund_status": latest_return.get("refund_status"),
         }
+        # Only attach return/refund facts when a Return record actually exists.
+        # Leaving these keys out (rather than setting them to None) prevents
+        # both the fallback template and the Gemini prompt from inventing a
+        # refund status for orders that were never returned.
+        if latest_return:
+            order_snapshot["return_status"] = latest_return.get("return_status")
+            order_snapshot["refund_status"] = latest_return.get("refund_status")
 
     if not client:
-        if order_snapshot:
-            customer_name = order_snapshot.get("customer_name") or "there"
-            product_name = order_snapshot.get("product_name") or "your item"
-            expected_delivery = order_snapshot.get("expected_delivery") or "your expected date"
-            refund_status = order_snapshot.get("refund_status") or "being processed"
-            return (
-                f"Hi {customer_name}! I checked your order and your {product_name} is currently "
-                f"{str(order_snapshot.get('status', 'on the way')).lower().replace('_', ' ')}. "
-                f"The expected delivery date is {expected_delivery}, and your refund status is {str(refund_status).lower()}."
-            )
-        return "Thank you for contacting Northstar Support! How can I assist you with your order today?"
+        return _fallback_response(order_snapshot)
 
     system_instruction = (
         "You are Northstar Support's lead customer care specialist. "
@@ -119,6 +140,9 @@ def generate_human_response(message: str, order_data: dict = None) -> str:
         "return_status is the return process state, and refund_status is the refund state. "
         "If refund_status is PENDING, say the refund is pending or processing; never say it failed. "
         "If return_status is COMPLETED, acknowledge that the return was completed. "
+        "If the order context has no return_status or refund_status field at all, that means the customer "
+        "has never opened a return for this order — do NOT mention returns or refunds in your reply, and "
+        "never invent or assume a refund status in that case. "
         "Use only the supplied facts and answer in 2-3 warm, professional, human sentences. "
         "Keep the response plain conversational English, not JSON, not bullet points, and not raw database dumps."
     )
@@ -148,15 +172,7 @@ def generate_human_response(message: str, order_data: dict = None) -> str:
     except Exception as e:
         logger.error(f"[intent.py] generate_human_response error: {e}")
         if order_snapshot:
-            customer_name = order_snapshot.get("customer_name") or "there"
-            product_name = order_snapshot.get("product_name") or "your item"
-            expected_delivery = order_snapshot.get("expected_delivery") or "your expected date"
-            refund_status = order_snapshot.get("refund_status") or "being processed"
-            return (
-                f"Hi {customer_name}! I checked your order and your {product_name} is currently "
-                f"{str(order_snapshot.get('status', 'on the way')).lower().replace('_', ' ')}. "
-                f"The expected delivery date is {expected_delivery}, and your refund status is {str(refund_status).lower()}."
-            )
+            return _fallback_response(order_snapshot)
         return (
             "Thank you for contacting Northstar Support! I'm having a brief issue pulling "
             "up your details, but our support team has received your message and will update you shortly."

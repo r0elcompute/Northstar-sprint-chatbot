@@ -16,21 +16,19 @@ def seed_database():
     Product.objects.all().delete()
     Customer.objects.all().delete()
 
-    print("Seeding new test data (20 records per table)...")
+    print("Seeding new test data...")
 
     # 1. Seed 20 Customers
-    first_names = ["Jane", "John", "Alice", "Bob", "Charlie", "David", "Eva", "Frank", "Grace", "Hannah", 
+    first_names = ["Jane", "John", "Alice", "Bob", "Charlie", "David", "Eva", "Frank", "Grace", "Hannah",
                    "Ian", "Julia", "Kevin", "Laura", "Michael", "Nora", "Oscar", "Pamela", "Quinn", "Rachel"]
     last_names = ["Doe", "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez",
                   "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson"]
 
     customers = []
     for i in range(20):
-        fname = first_names[i]
-        lname = last_names[i]
         customer = Customer.objects.create(
-            name=f"{fname} {lname}",
-            email=f"{fname.lower()}.{lname.lower()}@example.com",
+            name=f"{first_names[i]} {last_names[i]}",
+            email=f"{first_names[i].lower()}.{last_names[i].lower()}@example.com",
             phone=f"+2547{random.randint(10000000, 99999999)}"
         )
         customers.append(customer)
@@ -72,19 +70,23 @@ def seed_database():
 
     # 3. Seed 20 Orders (Order IDs 1001 to 1020)
     order_statuses = ["PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"]
+    reasons = ["Damaged packaging", "Wrong item delivered", "Defective product", "Changed mind", "Item arrived late", "Size did not fit"]
     today = date.today()
 
-    orders = []
     for i in range(20):
         order_id = 1001 + i
-        customer = customers[i]  # Map 1:1 or use random.choice(customers)
-        product = random.choice(products)
+        customer = customers[i]
+        product = products[i]
         quantity = random.randint(1, 3)
         status = random.choice(order_statuses)
-        
-        # Delivery dates relative to today
-        delivery_offset = random.randint(-5, 10)
-        expected_delivery = today + timedelta(days=delivery_offset)
+
+        # --- Rule 1: Delivery dates strictly tied to status ---
+        if status == "CANCELLED":
+            expected_delivery = None
+        elif status in ("PROCESSING", "SHIPPED"):
+            expected_delivery = today + timedelta(days=random.randint(1, 7))
+        else:  # DELIVERED
+            expected_delivery = today - timedelta(days=random.randint(1, 14))
 
         order = Order.objects.create(
             order_id=order_id,
@@ -94,30 +96,44 @@ def seed_database():
             status=status,
             expected_delivery=expected_delivery
         )
-        orders.append(order)
 
-    # 4. Seed 20 Return entries (linked across the 20 orders)
-    reasons = [
-        "Damaged packaging", "Wrong item delivered", "Defective product", 
-        "Changed mind", "Item arrived late", "Size did not fit"
-    ]
-    return_statuses = ["REQUESTED", "APPROVED", "REJECTED", "COMPLETED"]
-    refund_statuses = ["PENDING", "PROCESSED", "REFUNDED", "FAILED"]
+        refund_amt = round(float(product.price) * quantity, 2)
 
-    # Pick 20 orders (with replacement or shuffle) to assign return requests
-    sampled_orders = random.choices(orders, k=20)
+        # --- Rule 2: Return & refund relationships strictly tied to status ---
+        if status == "CANCELLED":
+            # Cancelled orders always get an automatic completed refund
+            Return.objects.create(
+                order=order,
+                reason="Order cancelled before shipping",
+                return_status="COMPLETED",
+                refund_status="PROCESSED",
+                refund_amount=refund_amt
+            )
 
-    for order in sampled_orders:
-        refund_amt = round(float(order.product.price) * order.quantity, 2)
-        Return.objects.create(
-            order=order,
-            reason=random.choice(reasons),
-            return_status=random.choice(return_statuses),
-            refund_status=random.choice(refund_statuses),
-            refund_amount=refund_amt
-        )
+        elif status == "DELIVERED":
+            # 50% chance a delivered order has a return
+            if random.random() < 0.5:
+                return_status = random.choice(["REQUESTED", "APPROVED", "REJECTED", "COMPLETED"])
 
-    print("Database successfully seeded with 20 records per table!")
+                if return_status == "COMPLETED":
+                    refund_status = random.choice(["PROCESSED", "PENDING"])
+                elif return_status == "REJECTED":
+                    refund_status = random.choice(["FAILED", "NOT_APPLICABLE"])
+                else:  # REQUESTED or APPROVED
+                    refund_status = "PENDING"
+
+                Return.objects.create(
+                    order=order,
+                    reason=random.choice(reasons),
+                    return_status=return_status,
+                    refund_status=refund_status,
+                    refund_amount=refund_amt
+                )
+
+        # PROCESSING and SHIPPED orders NEVER get Return/refund records
+        # (no else branch needed — simply skipped)
+
+    print("Database successfully seeded with realistic order, return, and refund workflows!")
 
 if __name__ == '__main__':
     seed_database()
