@@ -422,7 +422,7 @@
     scrollToBottom();
   }
 
-  // --- Intent parsing (lightweight, mirrors backend fallback expectations) ---
+  // --- Intent parsing ---
   function extractOrderId(text){
     const match = text.match(/\b(\d{3,6})\b/);
     return match ? parseInt(match[1], 10) : null;
@@ -453,7 +453,13 @@
     if(!res.ok || json.error){
       throw { serverError: true, message: json.error || 'Something went wrong on our end.' };
     }
-    return json.reply;
+
+    // Defensive unwrapping: guard against json.reply ever being an object
+    // instead of a plain string.
+    if(typeof json.reply === 'object' && json.reply !== null){
+      return json.reply.text || json.reply.reply || json.reply.message || JSON.stringify(json.reply);
+    }
+    return String(json.reply || '');
   }
 
   async function checkConnection(){
@@ -491,16 +497,22 @@
     addTyping();
 
     try{
+      // 1. Send chat request first
       const reply = await postChat(text, orderId);
       removeTyping();
-      addBotText(reply);
 
+      // Guarantee a string is passed to addBotText, even if postChat's
+      // own unwrapping somehow still leaves an object.
+      const safeReplyText = typeof reply === 'object' ? JSON.stringify(reply) : String(reply);
+      addBotText(safeReplyText);
+
+      // 2. Fetch order details sequentially after chat resolves to prevent Django lockup
       if(orderId){
         try{
           const order = await fetchOrder(orderId);
           renderOrderCard(order);
         }catch(orderErr){
-          // Chat already answered; order card is a bonus, so fail quietly here.
+          // Silent fallback for order card UI
         }
       }
     }catch(err){
