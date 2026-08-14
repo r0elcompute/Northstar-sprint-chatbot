@@ -23,21 +23,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 
-STATIC_URL = 'static/'
-
-# Add this line right below STATIC_ROOT:
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-@t+xft*h5d0)suhhz2(o0gn_kqhzil98-lftq3&_%95(zg9c^e'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-@t+xft*h5d0)suhhz2(o0gn_kqhzil98-lftq3&_%95(zg9c^e')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -141,6 +136,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
 # Email
@@ -151,5 +147,6 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
 # CORS Configuration
-CORS_ALLOW_ALL_ORIGINS = True  # Allows any local frontend (React, Vite, etc.) to call your API during dev
+CORS_ALLOW_ALL_ORIGINS = True  # Allows any local frontend to call your API during dev
