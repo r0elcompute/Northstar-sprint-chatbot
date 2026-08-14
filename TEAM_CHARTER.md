@@ -70,6 +70,13 @@ A task is considered Done when:
 6.Another teammate has reviewed the work where applicable.
 7.The approved changes have been merged into main.
 8.The corresponding Project Board item has been moved to Done.
+9.The agreed work has been completed.
+10.The code/documentation has been committed to the member's branch.
+11.The change has been reviewed by another teammate where applicable.
+12.The PR has been approved and merged into main.
+13.The relevant documentation has been updated.
+14.The feature/task has been tested.
+15.Any known issues are recorded.
 
 ## 7. Code Review and Pull Requests
 
@@ -107,6 +114,17 @@ Team contributions will be tracked through GitHub using:
 6.Project Board updates
 
 Each member should work on assigned tasks and ensure their meaningful contributions are visible through the GitHub history.
+The team should track contributions through GitHub:
+
+Each member works primarily from their own feature/task branch.
+Each meaningful change should have a GitHub commit.
+Larger changes should use a Pull Request.
+PRs should identify what was changed and why.
+Teammates review each other's PRs.
+Issues/tasks are assigned to an owner.
+The Project Board records status: Todo → In Progress → Review → Done.
+Contributions should be visible through commits, PRs, reviews, and completed tasks.
+Team members should not directly overwrite another person's work.
 
 ## 12. Team Agreement
 
