@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Northstar Support</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FFD700'><path d='M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z'/></svg>"><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -289,7 +290,7 @@
 
   <div class="settings-panel" id="settingsPanel">
     <label for="apiBase">API base URL</label>
-    <input id="apiBase" type="text" value="http://127.0.0.1:8000/api/v1" spellcheck="false">
+    <input id="apiBase" type="text" value="/api/v1" spellcheck="false">
   </div>
 
   <div class="thread" id="thread"></div>
@@ -454,8 +455,6 @@
       throw { serverError: true, message: json.error || 'Something went wrong on our end.' };
     }
 
-    // Defensive unwrapping: guard against json.reply ever being an object
-    // instead of a plain string.
     if(typeof json.reply === 'object' && json.reply !== null){
       return json.reply.text || json.reply.reply || json.reply.message || JSON.stringify(json.reply);
     }
@@ -497,16 +496,12 @@
     addTyping();
 
     try{
-      // 1. Send chat request first
       const reply = await postChat(text, orderId);
       removeTyping();
 
-      // Guarantee a string is passed to addBotText, even if postChat's
-      // own unwrapping somehow still leaves an object.
       const safeReplyText = typeof reply === 'object' ? JSON.stringify(reply) : String(reply);
       addBotText(safeReplyText);
 
-      // 2. Fetch order details sequentially after chat resolves to prevent Django lockup
       if(orderId){
         try{
           const order = await fetchOrder(orderId);
