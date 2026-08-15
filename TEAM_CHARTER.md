@@ -31,7 +31,7 @@ https://github.com/titan-devs/Northstar-sprint-chatbot
 |---|---|---|
 | Member 1 | Team Charter Coordination | Coordinate the Team Charter, organize the team's structure, and ensure all sections are combined into the final document. |
 | Member 2 | Communication & Meetings | Coordinate team communication, organize meetings, record important discussions, and share relevant updates with team members. |
-| Member 3 | Git/GitHub Workflow | Guide the team on Git and GitHub practices, including branches, commits, repository management, and contribution workflow. |
+| Rodgers Fanuel Mwangi | Git/GitHub Workflow | Guide the team on Git and GitHub practices, including branches, commits, repository management, and contribution workflow. |
 | Member 4 | Task Management & Deadlines | Manage task assignments, track deadlines, monitor progress on the GitHub Project Board, and ensure tasks have clear Definitions of Done. |
 | Member 5 | Conflict Resolution & Accountability | Help resolve team disagreements, encourage constructive communication, and support the team in addressing issues that affect project progress. |
 
@@ -178,6 +178,6 @@ By signing below, each team member confirms that they have read, understood, and
 |---|---|---|---|
 | Member 1 | Team Charter Coordination | __________________ | __________ |
 | Member 2 | Communication & Meetings | __________________ | __________ |
-| Member 3 | Git/GitHub Workflow | __________________ | __________ |
+| Rodgers Fanuel Mwangi | Git/GitHub Workflow | _____Rodgers_____________ | ____8/15/2026______ |
 | Member 4 | Task Management & Deadlines | __________________ | __________ |
 | Member 5 | Conflict Resolution & Accountability | __________________ | __________ |
