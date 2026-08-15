@@ -6,7 +6,7 @@
 
 **Project:** Northstar-sprint-chatbot
 
-**Team Members:** 
+**Team Members:**
 
 1. Christine Wanja
 2. Fanuel Rhogers
@@ -14,8 +14,7 @@
 4. Didymus Kiai
 5. Rachael Hinga
 
-
-**Project Repository:** 
+**Project Repository:**
 
 https://github.com/titan-devs/Northstar-sprint-chatbot
 
@@ -26,21 +25,15 @@ https://github.com/titan-devs/Northstar-sprint-chatbot
 * The team aims to complete all agreed tasks within the set deadlines while maintaining effective collaboration, accountability, and respect among members.
 * The final Team Charter will represent the collective agreement and contribution of all five team members.
 
-
-
-
-
 ## 2. Team Roles and Responsibilities
 
-*Member 1 Team Charter Coordination | Coordinate the Team Charter, organize the team's structure, and ensure all sections are combined into the final document. |
-*Member 2 | Communication & Meetings | Coordinate team communication, organize meetings, record important discussions, and share relevant updates with team members. |
-*Member 3 | Git/GitHub Workflow | Guide the team on Git and GitHub practices, including branches, commits, repository management, and contribution workflow. |
-*Member 4 | Task Management & Deadlines | Manage task assignments, track deadlines, monitor progress on the GitHub Project Board, and ensure tasks have clear Definitions of Done. |
-*Member 5 | Conflict Resolution & Accountability | Help resolve team disagreements, encourage constructive communication, and support the team in addressing issues that affect project progress. |
-
-
-
-
+| Member | Role | Responsibilities |
+|---|---|---|
+| Member 1 | Team Charter Coordination | Coordinate the Team Charter, organize the team's structure, and ensure all sections are combined into the final document. |
+| Member 2 | Communication & Meetings | Coordinate team communication, organize meetings, record important discussions, and share relevant updates with team members. |
+| Member 3 | Git/GitHub Workflow | Guide the team on Git and GitHub practices, including branches, commits, repository management, and contribution workflow. |
+| Member 4 | Task Management & Deadlines | Manage task assignments, track deadlines, monitor progress on the GitHub Project Board, and ensure tasks have clear Definitions of Done. |
+| Member 5 | Conflict Resolution & Accountability | Help resolve team disagreements, encourage constructive communication, and support the team in addressing issues that affect project progress. |
 
 ## 3. Communication
 
@@ -57,20 +50,20 @@ https://github.com/titan-devs/Northstar-sprint-chatbot
 
 ### Git & GitHub Workflow Rules
 
- 1. **Branch Management**
+1. **Branch Management**
    * Do not commit directly to `main`.
    * Create feature branches using the naming format: `feature/<feature-name>` or `fix/<bug-name>`.
 
- 2. **Keeping Branches Updated**
+2. **Keeping Branches Updated**
    * Frequently pull/merge updates from `main` into your working branch to avoid large merge conflicts.
    * Test your code locally after pulling updates before creating a PR.
 
- 3. **Pull Requests (PRs) & Code Reviews**
+3. **Pull Requests (PRs) & Code Reviews**
    * All code entering `main` requires a GitHub Pull Request.
    * Include a short summary of changes and local test results in the PR description.
    * Every PR must be reviewed and approved by at least one team member before merging.
 
- 4. **Security & Secrets**
+4. **Security & Secrets**
    * Never commit API keys, database credentials, or `.env` files. Ensure `.gitignore` is active.
 
 ---
@@ -83,9 +76,6 @@ https://github.com/titan-devs/Northstar-sprint-chatbot
 * The assigned member should complete the task within the agreed deadline.
 * If a member anticipates a delay, they should inform the team early and agree on an appropriate solution.
 * A task is marked **Done** only after it meets its Definition of Done and has been reviewed where applicable.
-
-
-
 
 ## 6. Definition of Done
 
@@ -101,6 +91,7 @@ https://github.com/titan-devs/Northstar-sprint-chatbot
 8. The corresponding Project Board item has been moved to Done.
 
 ## 7. Code Review and Pull Requests
+
 **Code Review**
 
 * All contributions should be reviewed by at least one other team member before being merged into the main branch.
@@ -119,9 +110,6 @@ https://github.com/titan-devs/Northstar-sprint-chatbot
 * Once the Pull Request is approved and the work meets the Definition of Done, it can be merged into the main branch.
 * The GitHub Pull Request history will provide a record of contributions, reviews, feedback, and approvals throughout the project.
 
-
-
-
 ## 8. Conflict Resolution
 * Address disagreements early through respectful and open communication.
 * Allow each member involved in a disagreement to explain their perspective.
@@ -130,10 +118,6 @@ https://github.com/titan-devs/Northstar-sprint-chatbot
 * If the members cannot resolve the issue, bring it to the entire team for discussion and a collective decision.
 * Record important decisions in the appropriate GitHub issue, project discussion, or team documentation.
 * Ensure that conflicts are resolved promptly so they do not delay the team's progress.
-
-
-
-
 
 ## 9. Meetings and Progress Updates
 
@@ -173,7 +157,7 @@ Each team member should:
 GitHub history and the Project Board will provide a shared record of individual contributions throughout the project.
 
 ## 12. Team Agreement
- * All team members agree to actively participate in the assignment and contribute to the team's goals.
+* All team members agree to actively participate in the assignment and contribute to the team's goals.
 * Each member will complete their assigned tasks within the agreed deadlines.
 * Team members will communicate respectfully and maintain clear communication throughout the project.
 * All members will follow the agreed Git and GitHub workflow when contributing to the repository.
@@ -184,18 +168,16 @@ GitHub history and the Project Board will provide a shared record of individual 
 * The team will respect different opinions and work collaboratively to resolve disagreements.
 * All members agree to follow the final decisions made by the team regarding the assignment.
 
-
-
-
 ## Sign-Off
+
 **Team Agreement Sign-Off**
+
 By signing below, each team member confirms that they have read, understood, and agreed to follow the terms outlined in this Team Charter.
 
- *Member | Role | Signature | Date |
- *Member 1 | Team Charter Coordination | __________________ | __________ |
- *Member 2 | Communication & Meetings | __________________ | __________ |
- *Member 3 | Git/GitHub Workflow | __________________ | __________ |
- *Member 4 | Task Management & Deadlines | __________________ | __________ |
- *Member 5 | Conflict Resolution & Accountability | __________________ | __________ |
-
-
+| Member | Role | Signature | Date |
+|---|---|---|---|
+| Member 1 | Team Charter Coordination | __________________ | __________ |
+| Member 2 | Communication & Meetings | __________________ | __________ |
+| Member 3 | Git/GitHub Workflow | __________________ | __________ |
+| Member 4 | Task Management & Deadlines | __________________ | __________ |
+| Member 5 | Conflict Resolution & Accountability | __________________ | __________ |
