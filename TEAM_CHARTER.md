@@ -179,5 +179,5 @@ By signing below, each team member confirms that they have read, understood, and
 | Member 1 | Team Charter Coordination | __________________ | __________ |
 | Member 2 | Communication & Meetings | __________________ | __________ |
 | Rodgers Fanuel Mwangi | Git/GitHub Workflow | _____Rodgers_____________ | ____8/15/2026______ |
-| Member 4 | Task Management & Deadlines | __________________ | __________ |
+| Rachael Hinga | Task Management & Deadlines | __________Rachael________ | ____8/15/2026______ |
 | Member 5 | Conflict Resolution & Accountability | __________________ | __________ |
